@@ -3,7 +3,7 @@ function Pagination (rootSelector, total, current) {
 	this.total = total; // итого страниц
 	this.current = current || 0; // если значение не задано, то = 0
 	this.render(); // метод, который генерирует разметку компонента 
-	this.installListeners(); // метод, который расставляет все орбаботчикиж делаем однократно
+	this.installListeners(); // метод, который расставляет все орбаботчики, делаем однократно
 }
 
 Pagination.prototype = {
