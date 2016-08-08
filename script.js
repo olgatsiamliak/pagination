@@ -1,13 +1,27 @@
 function Pagination (rootSelector, total, current) {
 	this.root = $(rootSelector); // селектор контейнера
-	this.total = total; // итого страниц
-	this.current = current || 0; // если значение не задано, то = 0
+	this.total = total; // итого страниц	
+	var current =  current || 0; // если значение не задано, то = 0
+	this.current = function (value) {
+		if (!arguments.length) return current;
+		if (typeof(value) != 'number') return;
+		if ( value < 0 ) value = 0;
+		else if ( value >= this.total ) value = this.total - 1;
+		if (current != value) {
+			current = value;
+			this.notify();
+			this.render();
+		}
+		  
+	}
 	this.render(); // метод, который генерирует разметку компонента 
 	this.installListeners(); // метод, который расставляет все орбаботчики, делаем однократно
+
 }
 
 Pagination.prototype = {
 	render: function () {
+		var current = this.current();
 		var root = this.root; // записали в переменную текущий контекст this, чтобы в ф-ции renderLink он был доступен
 		function renderLink (params) { 
 			var li = $('<li><a></a></li>'); // шаблон, который верен для всех элементов нашего pagination
@@ -27,8 +41,8 @@ Pagination.prototype = {
 
 		}
 		this.root.empty();
-		var centerLeft = Math.max(1, this.current -2); // левая сторона от активного элемента (1 - если крайнее значение активно)
-		var centerRight = Math.min(this.total - 2, this.current + 2); // правая стороны от активного элемента (итого - 2 для крайнего элемента)
+		var centerLeft = Math.max(1, current -2); // левая сторона от активного элемента (1 - если крайнее значение активно)
+		var centerRight = Math.min(this.total - 2, current + 2); // правая стороны от активного элемента (итого - 2 для крайнего элемента)
         var leftDots = centerLeft > 2; // многоточие появляется если разница больше двух элементов
         var rightDots = centerRight < this.total - 3; 
         if (centerLeft == 2) centerLeft--; // если разница два элемента, значит ставим элемент, вместо многоточия
@@ -37,12 +51,12 @@ Pagination.prototype = {
 		renderLink({
 				type: 'arrow',
 				value: -1,
-				disabled: this.current == 0
+				disabled: current == 0
 			})
 		renderLink({
 				type: 'number',
 				value: 1,
-				active: this.current == 0
+				active: current == 0
 			})
 		if (leftDots) renderLink({
 				type: 'dots'
@@ -52,7 +66,7 @@ Pagination.prototype = {
 			renderLink({
 				type: 'number',
 				value: i + 1,
-				active: this.current == i
+				active: current == i
 			})
 		}
 
@@ -63,13 +77,13 @@ Pagination.prototype = {
 		renderLink({
 			type: 'number',
 			value: this.total,
-			active: this.current == this.total - 1
+			active: current == this.total - 1
 		})
 
 		renderLink({
 			type: 'arrow',
 			value: +1,
-			disabled: this.current == this.total - 1
+			disabled: current == this.total - 1
 		})
 
 	},
@@ -77,23 +91,38 @@ Pagination.prototype = {
 		this.root.click( this.handleClick.bind(this) ); // клик на контейнер и обработчик с закреплением контекста this
 	},
 	handleClick: function(event) { // 
+		var current = this.current();
 		var target = $(event.target); // записали событие клика в переменную  
 		if ( !target.is('a[href]')) return; // если кликнули не по a, у которой есть href, то нам это не интересно
 		event.preventDefault(); // дефолтные браузеровские штуки событий заблокировали
 		if ( target.parent().hasClass('previous') ) { // если кликнули по стрелке предыдущий, то активный класс вешаем на активный - 1
-			if (this.current > 0) --this.current;
+			if ( current > 0) --current;
 		} else if ( target.parent().hasClass('next') ) { // если по следующей, то активная будет + 1
-			if (this.current < this.total - 1) ++this.current;
+			if ( current < this.total - 1) ++current;
 		} else {
-			var newActive = +target.text() - 1; // по всех других случаях, активный будет текст страницы, преобразованный в число -1 (т.к. нумерация с нуля)
-		this.current = newActive;
-	}		
+			current = +target.text() - 1; // по всех других случаях, активный будет текст страницы, преобразованный в число -1 (т.к. нумерация с нуля)
+		}		
 
-		this.render();
-        
+        this.current(current);
+	},
+	notify: function () {
+		if (this.onPageChange) this.onPageChange(this.current());
 	}
 }
 $(document).ready(function () { // создаем новый экземпляр класса
-	new Pagination('.pagination', 10, 4);
+	var page = new Pagination('.pagination', 11, 4);
+	page.onPageChange = function(page) {
+		console.log(page);
+	}
+
+	$('#click').click(function () {
+		var xhr = $.ajax({
+			url: 'new.json',
+			dataType: 'json',
+			method: 'GET'
+		}).done(function (data, status, xhr) {
+			console.log(arguments);
+		})
+	})
 })
 
