@@ -115,14 +115,5 @@ $(document).ready(function () { // создаем новый экземпляр 
 		console.log(page);
 	}
 
-	$('#click').click(function () {
-		var xhr = $.ajax({
-			url: 'new.json',
-			dataType: 'json',
-			method: 'GET'
-		}).done(function (data, status, xhr) {
-			console.log(arguments);
-		})
-	})
 })
 
